@@ -61,24 +61,24 @@ document.querySelector('#download').addEventListener('click', writeOut);
 function writeOut() {
   // https://developer.mozilla.org/ja/docs/Web/HTML/Canvas/Drawing_DOM_objects_into_a_canvas
   // https://azu.github.io/t_wada_generator/t_wada.js
-  let xml = new XMLSerializer().serializeToString(document.querySelector('svg'));
-  let svg = new Blob([xml], { type: 'image/svg+xml; charset=utf-8' });
+  var xml = new XMLSerializer().serializeToString(document.querySelector('svg'));
+  var svg = new Blob([xml], { type: 'image/svg+xml; charset=utf-8' });
 
-  let canvas = document.createElement('canvas');
+  var canvas = document.createElement('canvas');
   canvas.setAttribute('width',  '500');
   canvas.setAttribute('height', '500');
 
-  let img = new Image;
+  var img = new Image;
   img.src = URL.createObjectURL(svg);
   img.onload = function () {
-    let ctx = canvas.getContext('2d');
+    var ctx = canvas.getContext('2d');
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, 500, 500);
     ctx.drawImage(img, 0, 0);
     URL.revokeObjectURL(img.src);
 
     canvas.toBlob(function (blob) {
-      let a = document.createElement('a');
+      var a = document.createElement('a');
       a.download = 'graph.png';
       a.href = URL.createObjectURL(blob);
       a.click();
