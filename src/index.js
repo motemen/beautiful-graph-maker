@@ -55,3 +55,34 @@ function updateLines() {
   document.querySelector('#line-up').style.display   = state.trend === 'rising' ? '' : 'none';
   document.querySelector('#line-down').style.display = state.trend === 'rising' ? 'none' : '';
 }
+
+document.querySelector('#download').addEventListener('click', writeOut);
+
+function writeOut() {
+  // https://developer.mozilla.org/ja/docs/Web/HTML/Canvas/Drawing_DOM_objects_into_a_canvas
+  // https://azu.github.io/t_wada_generator/t_wada.js
+  let xml = new XMLSerializer().serializeToString(document.querySelector('svg'));
+  let svg = new Blob([xml], { type: 'image/svg+xml; charset=utf-8' });
+
+  let canvas = document.createElement('canvas');
+  canvas.setAttribute('width',  '500');
+  canvas.setAttribute('height', '500');
+
+  let img = new Image;
+  img.src = URL.createObjectURL(svg);
+  img.onload = function () {
+    let ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, 500, 500);
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(img.src);
+
+    canvas.toBlob(function (blob) {
+      let a = document.createElement('a');
+      a.download = 'graph.png';
+      a.href = URL.createObjectURL(blob);
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }, 'image/png', 0.9);
+  };
+}

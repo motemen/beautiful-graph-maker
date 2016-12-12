@@ -3,16 +3,27 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="utf-8">
-    <title>super-convincing-graph</title>
+    <title>The Graph</title>
     <style>
 #canvas {
   max-width: 500px;
   max-height: 500px;
   width: 100%;
   border: 1px solid #DDD;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 [onclick] {
   cursor: pointer;
+}
+#download-container {
+  margin-top: 2em;
+  text-align: center;
+}
+#download {
+  padding: 0.5em;
+  font-size: large;
 }
     </style>
   </head>
@@ -37,6 +48,7 @@
       <line x1="50"  y1="350" x2="50"  y2="50"  stroke-width="1"  stroke="black"></line>
       <line x1="50"  y1="350" x2="350" y2="350" stroke-width="1"  stroke="black"></line>
     </svg>
+    <p id="download-container"><button id="download">Download</button></p>
     <script src="index.js"></script>
   </body>
 </html>
