@@ -3,9 +3,9 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="utf-8">
-    <title>The Graph</title>
+    <title>The Beautiful Graph Maker</title>
     <style>
-#canvas {
+#main {
   max-width: 500px;
   max-height: 500px;
   width: 100%;
@@ -17,7 +17,7 @@
 [onclick] {
   cursor: pointer;
 }
-#download-container {
+#buttons-container {
   margin-top: 2em;
   text-align: center;
 }
@@ -28,27 +28,49 @@
     </style>
   </head>
   <body>
-    <svg id="canvas" viewBox="-50 0 450 450">
-      <defs>
-        <marker id="arrow-head" viewBox="0 0 10 10" refX="0" refY="5" orient="auto">
-          <path d="M 0 0 L 10 5 L 0 10 z"></path>
-        </marker>
-      </defs>
-      <text id="y-label-upper" x="50" y="100" text-anchor="middle" dominant-baseline="middle" dx="-50" style="font-size: 50px" textLength="100"></text>
-      <text id="y-label-lower" x="50" y="300" text-anchor="middle" dominant-baseline="middle" dx="-50" style="font-size: 50px" textLength="100"></text>
-      <g style="font-family: 'Helvetica Neue', sans-serif; font-size: 24px">
-        <text x="100"  y="350" text-anchor="middle" dx="0"  dy="40">Before</text>
-        <text x="300"  y="350" text-anchor="middle" dx="10" dy="40">After</text>
-      </g>
-      <g>
-        <line id="line-up" x1="100" y1="300" x2="300" y2="100" stroke-width="10" stroke="black" marker-end="url(#arrow-head)"></line>
-        <line id="line-down" x1="100" y1="100" x2="300" y2="300" stroke-width="10" stroke="black" marker-end="url(#arrow-head)" style="display: none"></line>
-      </g>
-
-      <line x1="50"  y1="350" x2="50"  y2="50"  stroke-width="1"  stroke="black"></line>
-      <line x1="50"  y1="350" x2="350" y2="350" stroke-width="1"  stroke="black"></line>
-    </svg>
-    <p id="download-container"><button id="download">Download</button></p>
+    <div id="main"></div>
     <script src="index.js"></script>
+    <script>
+      var app = Elm.Main.embed(document.getElementById('main'));
+      app.ports.prompt.subscribe(function (which) {
+        app.ports.promptResult.send([ which, prompt(which + " label") ]);
+      });
+    </script>
+    <div id="buttons-container">
+      <p><button id="download">Download</button></p>
+      <p><a href="https://twitter.com/share" class="twitter-share-button" data-size="large" data-show-count="false">Tweet</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script></p>
+    </div>
+    <script>
+document.querySelector('#download').addEventListener('click', writeOut);
+
+function writeOut() {
+  // https://developer.mozilla.org/ja/docs/Web/HTML/Canvas/Drawing_DOM_objects_into_a_canvas
+  // https://azu.github.io/t_wada_generator/t_wada.js
+  var xml = new XMLSerializer().serializeToString(document.querySelector('svg'));
+  var svg = new Blob([xml], { type: 'image/svg+xml; charset=utf-8' });
+
+  var canvas = document.createElement('canvas');
+  canvas.setAttribute('width',  '500');
+  canvas.setAttribute('height', '500');
+
+  var img = new Image;
+  img.src = URL.createObjectURL(svg);
+  img.onload = function () {
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, 500, 500);
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(img.src);
+
+    canvas.toBlob(function (blob) {
+      var a = document.createElement('a');
+      a.download = 'graph.png';
+      a.href = URL.createObjectURL(blob);
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }, 'image/png', 0.9);
+  };
+}
+    </script>
   </body>
 </html>

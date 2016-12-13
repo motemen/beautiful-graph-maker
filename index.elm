@@ -1,3 +1,5 @@
+port module Main exposing (..)
+
 import Html exposing (Html)
 import Svg exposing (svg, defs, text_, g, line, marker, text)
 import Svg.Attributes exposing (..)
@@ -11,8 +13,16 @@ main =
     init = init
   , view = view
   , update = update
-  , subscriptions = (\_ -> Sub.none)
+  , subscriptions = subscriptions
   }
+
+port prompt : String -> Cmd msg
+
+port promptResult : ((String, String) -> msg) -> Sub msg
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  promptResult SetYLabel
 
 init : Navigation.Location -> (Model, Cmd Msg)
 init location =
@@ -29,8 +39,9 @@ type alias Model =
 
 type Msg
   = UrlChange Navigation.Location
-  | SetYLabelUpper String
-  | SetYLabelLower String
+  | RequestYLabelUpper
+  | RequestYLabelLower
+  | SetYLabel (String, String)
   | ToggleTrend
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -38,11 +49,19 @@ update msg model =
   case msg of
     UrlChange location ->
       init location
+    RequestYLabelUpper ->
+      ( model, prompt "Upper" )
+    RequestYLabelLower ->
+      ( model, prompt "Lower" )
     _ ->
       let newModel =
         case msg of
           ToggleTrend ->
             { model | lineRising = not model.lineRising }
+          SetYLabel ("Upper", label) ->
+            { model | yLabelUpper = label }
+          SetYLabel ("Lower", label) ->
+            { model | yLabelLower = label }
           _ ->
             model
       in
@@ -78,7 +97,9 @@ view model =
         textAnchor "middle",
         textLength "100",
         x "50",
-        y "100" ]
+        y "100",
+        onClick RequestYLabelUpper
+        ]
       [ text model.yLabelUpper ]
     , text_ [
         dominantBaseline "middle",
@@ -87,7 +108,9 @@ view model =
         textAnchor "middle",
         textLength "100",
         x "50",
-        y "300" ]
+        y "300",
+        onClick RequestYLabelLower
+        ]
       [ text model.yLabelLower ]
     , g [ style "font-family: 'Helvetica Neue', sans-serif; font-size: 24px" ] [
         text_ [ dx "0", dy "40", textAnchor "middle", x "100", y "350" ]
