@@ -2,9 +2,24 @@ import Html exposing (Html)
 import Svg exposing (svg, defs, text_, g, line, marker, text)
 import Svg.Attributes exposing (..)
 import Svg.Events exposing (onClick)
+import Navigation
+import QueryString exposing (one, string)
 
 main =
-  Html.beginnerProgram { model = model, view = view, update = update }
+  Navigation.program UrlChange
+  {
+    init = init
+  , view = view
+  , update = update
+  , subscriptions = (\_ -> Sub.none)
+  }
+
+init : Navigation.Location -> (Model, Cmd Msg)
+init location =
+  (
+    modelFromQueryString location.search
+  , Cmd.none
+  )
 
 type alias Model =
   { yLabelUpper : String
@@ -12,19 +27,43 @@ type alias Model =
   , lineRising : Bool
   }
 
-model : Model
-model = Model "😊" "🙁" True
-
 type Msg
-  = SetYLabelUpper String
+  = UrlChange Navigation.Location
+  | SetYLabelUpper String
   | SetYLabelLower String
   | ToggleTrend
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    ToggleTrend -> { model | lineRising = not model.lineRising }
-    _ -> model
+    UrlChange location ->
+      init location
+    _ ->
+      let newModel =
+        case msg of
+          ToggleTrend ->
+            { model | lineRising = not model.lineRising }
+          _ ->
+            model
+      in
+        ( newModel, Navigation.modifyUrl (queryStringFromModel newModel) )
+
+modelFromQueryString : String -> Model
+modelFromQueryString search =
+    let qs = QueryString.parse search
+    in
+      Model (qs |> QueryString.one QueryString.string "y2" |> Maybe.withDefault "😊")
+            (qs |> QueryString.one QueryString.string "y1" |> Maybe.withDefault "🙁")
+            (qs |> QueryString.one QueryString.int     "a" |> Maybe.withDefault 1 |> (\a -> a /= -1))
+
+queryStringFromModel : Model -> String
+queryStringFromModel model =
+  QueryString.empty
+    |> QueryString.add "a"  (if model.lineRising then "1" else "-1")
+    |> QueryString.add "y1" model.yLabelLower
+    |> QueryString.add "y2" model.yLabelUpper
+    |> QueryString.render
+
 
 view : Model -> Html Msg
 view model =
@@ -60,13 +99,14 @@ view model =
         id "line-up",
         markerEnd "url(#arrow-head)",
         stroke "black", strokeWidth "10",
+        display (if model.lineRising then "" else "none"),
         onClick ToggleTrend,
         x1 "100", x2 "300", y1 "300", y2 "100" ] []
     , line [
         id "line-down",
         markerEnd "url(#arrow-head)",
         stroke "black", strokeWidth "10",
-        style "display: none",
+        display (if model.lineRising then "none" else ""),
         onClick ToggleTrend,
         x1 "100", x2 "300", y1 "100", y2 "300" ] []
     , line [ stroke "black", strokeWidth "1", x1 "50", x2 "50", y1 "350", y2 "50" ]
