@@ -46,15 +46,21 @@ document.querySelector('#download').addEventListener('click', writeOut);
 function writeOut() {
   // https://developer.mozilla.org/ja/docs/Web/HTML/Canvas/Drawing_DOM_objects_into_a_canvas
   // https://azu.github.io/t_wada_generator/t_wada.js
-  var xml = new XMLSerializer().serializeToString(document.querySelector('svg'));
-  var svg = new Blob([xml], { type: 'image/svg+xml; charset=utf-8' });
+  var svg = document.querySelector('svg');
+  var bound = svg.getBoundingClientRect();
+  svg.setAttribute('width',  bound.width);
+  svg.setAttribute('height', bound.height);
+
+  var xml = new XMLSerializer().serializeToString(svg);
+  var svgContent = new Blob([xml], { type: 'image/svg+xml;charset=utf-8' });
+  svg.removeAttribute('width');
+  svg.removeAttribute('height');
 
   var canvas = document.createElement('canvas');
-  canvas.setAttribute('width',  '500');
-  canvas.setAttribute('height', '500');
+  canvas.setAttribute('width',  bound.width);
+  canvas.setAttribute('height', bound.height);
 
   var img = new Image;
-  img.src = URL.createObjectURL(svg);
   img.onload = function () {
     var ctx = canvas.getContext('2d');
     ctx.fillStyle = 'white';
@@ -64,12 +70,16 @@ function writeOut() {
 
     canvas.toBlob(function (blob) {
       var a = document.createElement('a');
+      document.body.appendChild(a);
       a.download = 'graph.png';
       a.href = URL.createObjectURL(blob);
       a.click();
-      URL.revokeObjectURL(a.href);
+
+      URL.revokeObjectURL(blob);
+      document.body.removeChild(a);
     }, 'image/png', 0.9);
   };
+  img.src = URL.createObjectURL(svgContent);
 }
     </script>
 <script>
